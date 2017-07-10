@@ -1,40 +1,18 @@
 (function() {
   'use strict';
 
-  var globals = typeof window === 'undefined' ? global : window;
+  var globals = typeof global === 'undefined' ? self : global;
   if (typeof globals.require === 'function') return;
 
   var modules = {};
   var cache = {};
   var aliases = {};
-  var has = ({}).hasOwnProperty;
+  var has = {}.hasOwnProperty;
 
-  var endsWith = function(str, suffix) {
-    return str.indexOf(suffix, str.length - suffix.length) !== -1;
-  };
-
-  var _cmp = 'components/';
-  var unalias = function(alias, loaderPath) {
-    var start = 0;
-    if (loaderPath) {
-      if (loaderPath.indexOf(_cmp) === 0) {
-        start = _cmp.length;
-      }
-      if (loaderPath.indexOf('/', start) > 0) {
-        loaderPath = loaderPath.substring(start, loaderPath.indexOf('/', start));
-      }
-    }
-    var result = aliases[alias + '/index.js'] || aliases[loaderPath + '/deps/' + alias + '/index.js'];
-    if (result) {
-      return _cmp + result.substring(0, result.length - '.js'.length);
-    }
-    return alias;
-  };
-
-  var _reg = /^\.\.?(\/|$)/;
+  var expRe = /^\.\.?(\/|$)/;
   var expand = function(root, name) {
     var results = [], part;
-    var parts = (_reg.test(name) ? root + '/' + name : name).split('/');
+    var parts = (expRe.test(name) ? root + '/' + name : name).split('/');
     for (var i = 0, length = parts.length; i < length; i++) {
       part = parts[i];
       if (part === '..') {
@@ -58,64 +36,138 @@
   };
 
   var initModule = function(name, definition) {
-    var module = {id: name, exports: {}};
+    var hot = hmr && hmr.createHot(name);
+    var module = {id: name, exports: {}, hot: hot};
     cache[name] = module;
     definition(module.exports, localRequire(name), module);
     return module.exports;
   };
 
+  var expandAlias = function(name) {
+    return aliases[name] ? expandAlias(aliases[name]) : name;
+  };
+
+  var _resolve = function(name, dep) {
+    return expandAlias(expand(dirname(name), dep));
+  };
+
   var require = function(name, loaderPath) {
-    var path = expand(name, '.');
     if (loaderPath == null) loaderPath = '/';
-    path = unalias(name, loaderPath);
+    var path = expandAlias(name);
 
     if (has.call(cache, path)) return cache[path].exports;
     if (has.call(modules, path)) return initModule(path, modules[path]);
 
-    var dirIndex = expand(path, './index');
-    if (has.call(cache, dirIndex)) return cache[dirIndex].exports;
-    if (has.call(modules, dirIndex)) return initModule(dirIndex, modules[dirIndex]);
-
-    throw new Error('Cannot find module "' + name + '" from '+ '"' + loaderPath + '"');
+    throw new Error("Cannot find module '" + name + "' from '" + loaderPath + "'");
   };
 
   require.alias = function(from, to) {
     aliases[to] = from;
   };
 
+  var extRe = /\.[^.\/]+$/;
+  var indexRe = /\/index(\.[^\/]+)?$/;
+  var addExtensions = function(bundle) {
+    if (extRe.test(bundle)) {
+      var alias = bundle.replace(extRe, '');
+      if (!has.call(aliases, alias) || aliases[alias].replace(extRe, '') === alias + '/index') {
+        aliases[alias] = bundle;
+      }
+    }
+
+    if (indexRe.test(bundle)) {
+      var iAlias = bundle.replace(indexRe, '');
+      if (!has.call(aliases, iAlias)) {
+        aliases[iAlias] = bundle;
+      }
+    }
+  };
+
   require.register = require.define = function(bundle, fn) {
-    if (typeof bundle === 'object') {
+    if (bundle && typeof bundle === 'object') {
       for (var key in bundle) {
         if (has.call(bundle, key)) {
-          modules[key] = bundle[key];
+          require.register(key, bundle[key]);
         }
       }
     } else {
       modules[bundle] = fn;
+      delete cache[bundle];
+      addExtensions(bundle);
     }
   };
 
   require.list = function() {
-    var result = [];
+    var list = [];
     for (var item in modules) {
       if (has.call(modules, item)) {
-        result.push(item);
+        list.push(item);
       }
     }
-    return result;
+    return list;
   };
 
-  require.brunch = true;
+  var hmr = globals._hmr && new globals._hmr(_resolve, require, modules, cache);
   require._cache = cache;
+  require.hmr = hmr && hmr.wrap;
+  require.brunch = true;
   globals.require = require;
 })();
-require.register("deps/phoenix/web/static/js/phoenix", function(exports, require, module) {
+
+(function() {
+var global = typeof window === 'undefined' ? this : window;
+var __makeRelativeRequire = function(require, mappings, pref) {
+  var none = {};
+  var tryReq = function(name, pref) {
+    var val;
+    try {
+      val = require(pref + '/node_modules/' + name);
+      return val;
+    } catch (e) {
+      if (e.toString().indexOf('Cannot find module') === -1) {
+        throw e;
+      }
+
+      if (pref.indexOf('node_modules') !== -1) {
+        var s = pref.split('/');
+        var i = s.lastIndexOf('node_modules');
+        var newPref = s.slice(0, i).join('/');
+        return tryReq(name, newPref);
+      }
+    }
+    return none;
+  };
+  return function(name) {
+    if (name in mappings) name = mappings[name];
+    if (!name) return;
+    if (name[0] !== '.' && pref) {
+      var val = tryReq(name, pref);
+      if (val !== none) return val;
+    }
+    return require(name);
+  }
+};
+require.register("deps/phoenix/web/static/js/phoenix.js", function(exports, require, module) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 // Phoenix Channels JavaScript client
 //
 // ## Socket Connection
 //
 // A single connection is established to the server and
-// channels are mulitplexed over the connection.
+// channels are multiplexed over the connection.
 // Connect to the server using the `Socket` class:
 //
 //     let socket = new Socket("/ws", {params: {userToken: "123"}})
@@ -135,7 +187,7 @@ require.register("deps/phoenix/web/static/js/phoenix", function(exports, require
 // events are listened for, messages are pushed to the server, and
 // the channel is joined with ok/error/timeout matches:
 //
-//     let channel = socket.channel("rooms:123", {token: roomToken})
+//     let channel = socket.channel("room:123", {token: roomToken})
 //     channel.on("new_msg", msg => console.log("Got message", msg) )
 //     $input.onEnter( e => {
 //       channel.push("new_msg", {body: e.target.val}, 10000)
@@ -158,6 +210,15 @@ require.register("deps/phoenix/web/static/js/phoenix", function(exports, require
 // Successful joins receive an "ok" status, while unsuccessful joins
 // receive "error".
 //
+// ## Duplicate Join Subscriptions
+//
+// While the client may join any number of topics on any number of channels,
+// the client may only hold a single subscription for each unique topic at any
+// given time. When attempting to create a duplicate subscription,
+// the server will close the existing channel, log a warning, and
+// spawn a new channel for the topic. The client will have their
+// `channel.onClose` callbacks fired for the existing channel, and the new
+// channel join will have its receive hooks processed as normal.
 //
 // ## Pushing Messages
 //
@@ -188,7 +249,7 @@ require.register("deps/phoenix/web/static/js/phoenix", function(exports, require
 // ### onError hooks
 //
 // `onError` hooks are invoked if the socket connection drops, or the channel
-// crashes on the server. In either case, a channel rejoin is attemtped
+// crashes on the server. In either case, a channel rejoin is attempted
 // automatically in an exponential backoff manner.
 //
 // ### onClose hooks
@@ -197,17 +258,78 @@ require.register("deps/phoenix/web/static/js/phoenix", function(exports, require
 // closed on the server, or 2). The client explicitly closed, by calling
 // `channel.leave()`
 //
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
+//
+// ## Presence
+//
+// The `Presence` object provides features for syncing presence information
+// from the server with the client and handling presences joining and leaving.
+//
+// ### Syncing initial state from the server
+//
+// `Presence.syncState` is used to sync the list of presences on the server
+// with the client's state. An optional `onJoin` and `onLeave` callback can
+// be provided to react to changes in the client's local presences across
+// disconnects and reconnects with the server.
+//
+// `Presence.syncDiff` is used to sync a diff of presence join and leave
+// events from the server, as they happen. Like `syncState`, `syncDiff`
+// accepts optional `onJoin` and `onLeave` callbacks to react to a user
+// joining or leaving from a device.
+//
+// ### Listing Presences
+//
+// `Presence.list` is used to return a list of presence information
+// based on the local state of metadata. By default, all presence
+// metadata is returned, but a `listBy` function can be supplied to
+// allow the client to select which metadata to use for a given presence.
+// For example, you may have a user online from different devices with a
+// a metadata status of "online", but they have set themselves to "away"
+// on another device. In this case, they app may choose to use the "away"
+// status for what appears on the UI. The example below defines a `listBy`
+// function which prioritizes the first metadata which was registered for
+// each user. This could be the first tab they opened, or the first device
+// they came online from:
+//
+//     let state = {}
+//     state = Presence.syncState(state, stateFromServer)
+//     let listBy = (id, {metas: [first, ...rest]}) => {
+//       first.count = rest.length + 1 // count of this user's presences
+//       first.id = id
+//       return first
+//     }
+//     let onlineUsers = Presence.list(state, listBy)
+//
+//
+// ### Example Usage
+//
+//     // detect if user has joined for the 1st time or from another tab/device
+//     let onJoin = (id, current, newPres) => {
+//       if(!current){
+//         console.log("user has entered for the first time", newPres)
+//       } else {
+//         console.log("user additional presence", newPres)
+//       }
+//     }
+//     // detect if user has left from all tabs/devices, or is still present
+//     let onLeave = (id, current, leftPres) => {
+//       if(current.metas.length === 0){
+//         console.log("user has left from all devices", leftPres)
+//       } else {
+//         console.log("user left from a device", leftPres)
+//       }
+//     }
+//     let presences = {} // client's initial empty presence state
+//     // receive initial presence data from server, sent after join
+//     myChannel.on("presences", state => {
+//       presences = Presence.syncState(presences, state, onJoin, onLeave)
+//       displayUsers(Presence.list(presences))
+//     })
+//     // receive "presence_diff" from server, containing join/leave events
+//     myChannel.on("presence_diff", diff => {
+//       presences = Presence.syncDiff(presences, diff, onJoin, onLeave)
+//       this.setState({users: Presence.list(room.presences, listBy)})
+//     })
+//
 var VSN = "1.0.0";
 var SOCKET_STATES = { connecting: 0, open: 1, closing: 2, closed: 3 };
 var DEFAULT_TIMEOUT = 10000;
@@ -215,7 +337,8 @@ var CHANNEL_STATES = {
   closed: "closed",
   errored: "errored",
   joined: "joined",
-  joining: "joining"
+  joining: "joining",
+  leaving: "leaving"
 };
 var CHANNEL_EVENTS = {
   close: "phx_close",
@@ -229,7 +352,7 @@ var TRANSPORTS = {
   websocket: "websocket"
 };
 
-var Push = (function () {
+var Push = function () {
 
   // Initializes the Push
   //
@@ -238,7 +361,6 @@ var Push = (function () {
   // payload - The payload, for example `{user_id: 123}`
   // timeout - The push timeout in milliseconds
   //
-
   function Push(channel, event, payload, timeout) {
     _classCallCheck(this, Push);
 
@@ -294,9 +416,9 @@ var Push = (function () {
   }, {
     key: "matchReceive",
     value: function matchReceive(_ref) {
-      var status = _ref.status;
-      var response = _ref.response;
-      var ref = _ref.ref;
+      var status = _ref.status,
+          response = _ref.response,
+          ref = _ref.ref;
 
       this.recHooks.filter(function (h) {
         return h.status === status;
@@ -353,9 +475,9 @@ var Push = (function () {
   }]);
 
   return Push;
-})();
+}();
 
-var Channel = (function () {
+var Channel = exports.Channel = function () {
   function Channel(topic, params, socket) {
     var _this2 = this;
 
@@ -382,20 +504,23 @@ var Channel = (function () {
       _this2.pushBuffer = [];
     });
     this.onClose(function () {
-      _this2.socket.log("channel", "close " + _this2.topic);
+      _this2.rejoinTimer.reset();
+      _this2.socket.log("channel", "close " + _this2.topic + " " + _this2.joinRef());
       _this2.state = CHANNEL_STATES.closed;
       _this2.socket.remove(_this2);
     });
     this.onError(function (reason) {
+      if (_this2.isLeaving() || _this2.isClosed()) {
+        return;
+      }
       _this2.socket.log("channel", "error " + _this2.topic, reason);
       _this2.state = CHANNEL_STATES.errored;
       _this2.rejoinTimer.scheduleTimeout();
     });
     this.joinPush.receive("timeout", function () {
-      if (_this2.state !== CHANNEL_STATES.joining) {
+      if (!_this2.isJoining()) {
         return;
       }
-
       _this2.socket.log("channel", "timeout " + _this2.topic, _this2.joinPush.timeout);
       _this2.state = CHANNEL_STATES.errored;
       _this2.rejoinTimer.scheduleTimeout();
@@ -416,15 +541,15 @@ var Channel = (function () {
   }, {
     key: "join",
     value: function join() {
-      var timeout = arguments.length <= 0 || arguments[0] === undefined ? this.timeout : arguments[0];
+      var timeout = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.timeout;
 
       if (this.joinedOnce) {
         throw "tried to join multiple times. 'join' can only be called a single time per channel instance";
       } else {
         this.joinedOnce = true;
+        this.rejoin(timeout);
+        return this.joinPush;
       }
-      this.rejoin(timeout);
-      return this.joinPush;
     }
   }, {
     key: "onClose",
@@ -453,12 +578,12 @@ var Channel = (function () {
   }, {
     key: "canPush",
     value: function canPush() {
-      return this.socket.isConnected() && this.state === CHANNEL_STATES.joined;
+      return this.socket.isConnected() && this.isJoined();
     }
   }, {
     key: "push",
     value: function push(event, payload) {
-      var timeout = arguments.length <= 2 || arguments[2] === undefined ? this.timeout : arguments[2];
+      var timeout = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.timeout;
 
       if (!this.joinedOnce) {
         throw "tried to push '" + event + "' to '" + this.topic + "' before joining. Use channel.join() before pushing events";
@@ -486,16 +611,18 @@ var Channel = (function () {
     //
     //     channel.leave().receive("ok", () => alert("left!") )
     //
+
   }, {
     key: "leave",
     value: function leave() {
       var _this3 = this;
 
-      var timeout = arguments.length <= 0 || arguments[0] === undefined ? this.timeout : arguments[0];
+      var timeout = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.timeout;
 
+      this.state = CHANNEL_STATES.leaving;
       var onClose = function onClose() {
         _this3.socket.log("channel", "leave " + _this3.topic);
-        _this3.trigger(CHANNEL_EVENTS.close, "leave");
+        _this3.trigger(CHANNEL_EVENTS.close, "leave", _this3.joinRef());
       };
       var leavePush = new Push(this, CHANNEL_EVENTS.leave, {}, timeout);
       leavePush.receive("ok", function () {
@@ -514,9 +641,15 @@ var Channel = (function () {
     // Overridable message hook
     //
     // Receives all events for specialized message handling
+    // before dispatching to the channel callbacks.
+    //
+    // Must return the payload, modified or unmodified
+
   }, {
     key: "onMessage",
-    value: function onMessage(event, payload, ref) {}
+    value: function onMessage(event, payload, ref) {
+      return payload;
+    }
 
     // private
 
@@ -524,6 +657,11 @@ var Channel = (function () {
     key: "isMember",
     value: function isMember(topic) {
       return this.topic === topic;
+    }
+  }, {
+    key: "joinRef",
+    value: function joinRef() {
+      return this.joinPush.ref;
     }
   }, {
     key: "sendJoin",
@@ -534,17 +672,32 @@ var Channel = (function () {
   }, {
     key: "rejoin",
     value: function rejoin() {
-      var timeout = arguments.length <= 0 || arguments[0] === undefined ? this.timeout : arguments[0];
+      var timeout = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.timeout;
+      if (this.isLeaving()) {
+        return;
+      }
       this.sendJoin(timeout);
     }
   }, {
     key: "trigger",
-    value: function trigger(triggerEvent, payload, ref) {
-      this.onMessage(triggerEvent, payload, ref);
+    value: function trigger(event, payload, ref) {
+      var close = CHANNEL_EVENTS.close,
+          error = CHANNEL_EVENTS.error,
+          leave = CHANNEL_EVENTS.leave,
+          join = CHANNEL_EVENTS.join;
+
+      if (ref && [close, error, leave, join].indexOf(event) >= 0 && ref !== this.joinRef()) {
+        return;
+      }
+      var handledPayload = this.onMessage(event, payload, ref);
+      if (payload && !handledPayload) {
+        throw "channel onMessage callbacks must return the payload, modified or unmodified";
+      }
+
       this.bindings.filter(function (bind) {
-        return bind.event === triggerEvent;
+        return bind.event === event;
       }).map(function (bind) {
-        return bind.callback(payload, ref);
+        return bind.callback(handledPayload, ref);
       });
     }
   }, {
@@ -552,14 +705,37 @@ var Channel = (function () {
     value: function replyEventName(ref) {
       return "chan_reply_" + ref;
     }
+  }, {
+    key: "isClosed",
+    value: function isClosed() {
+      return this.state === CHANNEL_STATES.closed;
+    }
+  }, {
+    key: "isErrored",
+    value: function isErrored() {
+      return this.state === CHANNEL_STATES.errored;
+    }
+  }, {
+    key: "isJoined",
+    value: function isJoined() {
+      return this.state === CHANNEL_STATES.joined;
+    }
+  }, {
+    key: "isJoining",
+    value: function isJoining() {
+      return this.state === CHANNEL_STATES.joining;
+    }
+  }, {
+    key: "isLeaving",
+    value: function isLeaving() {
+      return this.state === CHANNEL_STATES.leaving;
+    }
   }]);
 
   return Channel;
-})();
+}();
 
-exports.Channel = Channel;
-
-var Socket = (function () {
+var Socket = exports.Socket = function () {
 
   // Initializes the Socket
   //
@@ -589,11 +765,10 @@ var Socket = (function () {
   //
   // For IE8 support use an ES5-shim (https://github.com/es-shims/es5-shim)
   //
-
   function Socket(endPoint) {
     var _this4 = this;
 
-    var opts = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     _classCallCheck(this, Socket);
 
@@ -652,6 +827,7 @@ var Socket = (function () {
     }
 
     // params - The params to send when connecting, for example `{user_id: userToken}`
+
   }, {
     key: "connect",
     value: function connect(params) {
@@ -682,6 +858,7 @@ var Socket = (function () {
     }
 
     // Logs the message. Override `this.logger` for specialized logging. noops by default
+
   }, {
     key: "log",
     value: function log(kind, msg, data) {
@@ -694,6 +871,7 @@ var Socket = (function () {
     //
     //    socket.onError(function(error){ alert("An error occurred") })
     //
+
   }, {
     key: "onOpen",
     value: function onOpen(callback) {
@@ -782,13 +960,13 @@ var Socket = (function () {
     key: "remove",
     value: function remove(channel) {
       this.channels = this.channels.filter(function (c) {
-        return !c.isMember(channel.topic);
+        return c.joinRef() !== channel.joinRef();
       });
     }
   }, {
     key: "channel",
     value: function channel(topic) {
-      var chanParams = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+      var chanParams = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
       var chan = new Channel(topic, chanParams, this);
       this.channels.push(chan);
@@ -799,10 +977,10 @@ var Socket = (function () {
     value: function push(data) {
       var _this7 = this;
 
-      var topic = data.topic;
-      var event = data.event;
-      var payload = data.payload;
-      var ref = data.ref;
+      var topic = data.topic,
+          event = data.event,
+          payload = data.payload,
+          ref = data.ref;
 
       var callback = function callback() {
         return _this7.conn.send(JSON.stringify(data));
@@ -816,6 +994,7 @@ var Socket = (function () {
     }
 
     // Return the next message ref, accounting for overflows
+
   }, {
     key: "makeRef",
     value: function makeRef() {
@@ -850,10 +1029,10 @@ var Socket = (function () {
     key: "onConnMessage",
     value: function onConnMessage(rawMessage) {
       var msg = JSON.parse(rawMessage.data);
-      var topic = msg.topic;
-      var event = msg.event;
-      var payload = msg.payload;
-      var ref = msg.ref;
+      var topic = msg.topic,
+          event = msg.event,
+          payload = msg.payload,
+          ref = msg.ref;
 
       this.log("receive", (payload.status || "") + " " + topic + " " + event + " " + (ref && "(" + ref + ")" || ""), payload);
       this.channels.filter(function (channel) {
@@ -868,11 +1047,9 @@ var Socket = (function () {
   }]);
 
   return Socket;
-})();
+}();
 
-exports.Socket = Socket;
-
-var LongPoll = (function () {
+var LongPoll = exports.LongPoll = function () {
   function LongPoll(endPoint) {
     _classCallCheck(this, LongPoll);
 
@@ -922,9 +1099,9 @@ var LongPoll = (function () {
 
       Ajax.request("GET", this.endpointURL(), "application/json", null, this.timeout, this.ontimeout.bind(this), function (resp) {
         if (resp) {
-          var status = resp.status;
-          var token = resp.token;
-          var messages = resp.messages;
+          var status = resp.status,
+              token = resp.token,
+              messages = resp.messages;
 
           _this8.token = token;
         } else {
@@ -977,11 +1154,9 @@ var LongPoll = (function () {
   }]);
 
   return LongPoll;
-})();
+}();
 
-exports.LongPoll = LongPoll;
-
-var Ajax = (function () {
+var Ajax = exports.Ajax = function () {
   function Ajax() {
     _classCallCheck(this, Ajax);
   }
@@ -993,9 +1168,9 @@ var Ajax = (function () {
         var req = new XDomainRequest(); // IE8, IE9
         this.xdomainRequest(req, method, endPoint, body, timeout, ontimeout, callback);
       } else {
-        var req = window.XMLHttpRequest ? new XMLHttpRequest() : // IE7+, Firefox, Chrome, Opera, Safari
+        var _req = window.XMLHttpRequest ? new XMLHttpRequest() : // IE7+, Firefox, Chrome, Opera, Safari
         new ActiveXObject("Microsoft.XMLHTTP"); // IE6, IE5
-        this.xhrRequest(req, method, endPoint, accept, body, timeout, ontimeout, callback);
+        this.xhrRequest(_req, method, endPoint, accept, body, timeout, ontimeout, callback);
       }
     }
   }, {
@@ -1056,7 +1231,7 @@ var Ajax = (function () {
         }
         var paramKey = parentKey ? parentKey + "[" + key + "]" : key;
         var paramVal = obj[key];
-        if (typeof paramVal === "object") {
+        if ((typeof paramVal === "undefined" ? "undefined" : _typeof(paramVal)) === "object") {
           queryStr.push(this.serialize(paramVal, paramKey));
         } else {
           queryStr.push(encodeURIComponent(paramKey) + "=" + encodeURIComponent(paramVal));
@@ -1077,11 +1252,116 @@ var Ajax = (function () {
   }]);
 
   return Ajax;
-})();
-
-exports.Ajax = Ajax;
+}();
 
 Ajax.states = { complete: 4 };
+
+var Presence = exports.Presence = {
+  syncState: function syncState(currentState, newState, onJoin, onLeave) {
+    var _this12 = this;
+
+    var state = this.clone(currentState);
+    var joins = {};
+    var leaves = {};
+
+    this.map(state, function (key, presence) {
+      if (!newState[key]) {
+        leaves[key] = presence;
+      }
+    });
+    this.map(newState, function (key, newPresence) {
+      var currentPresence = state[key];
+      if (currentPresence) {
+        var newRefs = newPresence.metas.map(function (m) {
+          return m.phx_ref;
+        });
+        var curRefs = currentPresence.metas.map(function (m) {
+          return m.phx_ref;
+        });
+        var joinedMetas = newPresence.metas.filter(function (m) {
+          return curRefs.indexOf(m.phx_ref) < 0;
+        });
+        var leftMetas = currentPresence.metas.filter(function (m) {
+          return newRefs.indexOf(m.phx_ref) < 0;
+        });
+        if (joinedMetas.length > 0) {
+          joins[key] = newPresence;
+          joins[key].metas = joinedMetas;
+        }
+        if (leftMetas.length > 0) {
+          leaves[key] = _this12.clone(currentPresence);
+          leaves[key].metas = leftMetas;
+        }
+      } else {
+        joins[key] = newPresence;
+      }
+    });
+    return this.syncDiff(state, { joins: joins, leaves: leaves }, onJoin, onLeave);
+  },
+  syncDiff: function syncDiff(currentState, _ref2, onJoin, onLeave) {
+    var joins = _ref2.joins,
+        leaves = _ref2.leaves;
+
+    var state = this.clone(currentState);
+    if (!onJoin) {
+      onJoin = function onJoin() {};
+    }
+    if (!onLeave) {
+      onLeave = function onLeave() {};
+    }
+
+    this.map(joins, function (key, newPresence) {
+      var currentPresence = state[key];
+      state[key] = newPresence;
+      if (currentPresence) {
+        var _state$key$metas;
+
+        (_state$key$metas = state[key].metas).unshift.apply(_state$key$metas, _toConsumableArray(currentPresence.metas));
+      }
+      onJoin(key, currentPresence, newPresence);
+    });
+    this.map(leaves, function (key, leftPresence) {
+      var currentPresence = state[key];
+      if (!currentPresence) {
+        return;
+      }
+      var refsToRemove = leftPresence.metas.map(function (m) {
+        return m.phx_ref;
+      });
+      currentPresence.metas = currentPresence.metas.filter(function (p) {
+        return refsToRemove.indexOf(p.phx_ref) < 0;
+      });
+      onLeave(key, currentPresence, leftPresence);
+      if (currentPresence.metas.length === 0) {
+        delete state[key];
+      }
+    });
+    return state;
+  },
+  list: function list(presences, chooser) {
+    if (!chooser) {
+      chooser = function chooser(key, pres) {
+        return pres;
+      };
+    }
+
+    return this.map(presences, function (key, presence) {
+      return chooser(key, presence);
+    });
+  },
+
+
+  // private
+
+  map: function map(obj, func) {
+    return Object.getOwnPropertyNames(obj).map(function (key) {
+      return func(key, obj[key]);
+    });
+  },
+  clone: function clone(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+};
 
 // Creates a timer that accepts a `timerCalc` function to perform
 // calculated timeout retries, such as exponential backoff.
@@ -1097,7 +1377,7 @@ Ajax.states = { complete: 4 };
 //    reconnectTimer.scheduleTimeout() // fires after 1000
 //
 
-var Timer = (function () {
+var Timer = function () {
   function Timer(callback, timerCalc) {
     _classCallCheck(this, Timer);
 
@@ -1115,85 +1395,78 @@ var Timer = (function () {
     }
 
     // Cancels any previous scheduleTimeout and schedules callback
+
   }, {
     key: "scheduleTimeout",
     value: function scheduleTimeout() {
-      var _this12 = this;
+      var _this13 = this;
 
       clearTimeout(this.timer);
 
       this.timer = setTimeout(function () {
-        _this12.tries = _this12.tries + 1;
-        _this12.callback();
+        _this13.tries = _this13.tries + 1;
+        _this13.callback();
       }, this.timerCalc(this.tries + 1));
     }
   }]);
 
   return Timer;
-})();
+}();
+
 });
 
-;require.register("deps/phoenix_html/web/static/js/phoenix_html", function(exports, require, module) {
-// Although ^=parent is not technically correct,
-// we need to use it in order to get IE8 support.
+require.register("deps/phoenix_html/web/static/js/phoenix_html.js", function(exports, require, module) {
 'use strict';
 
-var elements = document.querySelectorAll('[data-submit^=parent]');
-var len = elements.length;
+function isLinkToSubmitParent(element) {
+  var isLinkTag = element.tagName === 'A';
+  var shouldSubmitParent = element.getAttribute('data-submit') === 'parent';
 
-for (var i = 0; i < len; ++i) {
-  elements[i].addEventListener('click', function (event) {
-    var message = this.getAttribute("data-confirm");
-    if (message === null || confirm(message)) {
-      this.parentNode.submit();
-    };
+  return isLinkTag && shouldSubmitParent;
+}
+
+function didHandleSubmitLinkClick(element) {
+  while (element && element.getAttribute) {
+    if (isLinkToSubmitParent(element)) {
+      var message = element.getAttribute('data-confirm');
+      if (message === null || confirm(message)) {
+        element.parentNode.submit();
+      };
+      return true;
+    } else {
+      element = element.parentNode;
+    }
+  }
+  return false;
+}
+
+// for links with HTTP methods other than GET
+window.addEventListener('click', function (event) {
+  if (event.target && didHandleSubmitLinkClick(event.target)) {
     event.preventDefault();
     return false;
-  }, false);
-}
+  }
+}, false);
+
 });
 
-;require.register("web/static/js/app", function(exports, require, module) {
-// Brunch automatically concatenates all files in your
-// watched paths. Those paths can be configured at
-// config.paths.watched in "brunch-config.js".
-//
-// However, those files will only be executed if
-// explicitly imported. The only exception are files
-// in vendor, which are never wrapped in imports and
-// therefore are always executed.
-
-// Import dependencies
-//
-// If you no longer want to use a dependency, remember
-// to also remove its path from "config.paths.watched".
+require.register("web/static/js/app.js", function(exports, require, module) {
 "use strict";
 
 require("deps/phoenix_html/web/static/js/phoenix_html");
 
-// Import local files
-//
-// Local files can be imported directly using relative
-// paths "./socket" or full ones "web/static/js/socket".
-
-// import socket from "./socket"
 });
 
-;require.register("web/static/js/socket", function(exports, require, module) {
-// NOTE: The contents of this file will only be executed if
-// you uncomment its entry in "web/static/js/app.js".
-
-// To use Phoenix channels, the first step is to import Socket
-// and connect at the socket path in "lib/my_app/endpoint.ex":
+require.register("web/static/js/socket.js", function(exports, require, module) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _depsPhoenixWebStaticJsPhoenix = require("deps/phoenix/web/static/js/phoenix");
+var _phoenix = require("deps/phoenix/web/static/js/phoenix");
 
-var socket = new _depsPhoenixWebStaticJsPhoenix.Socket("/socket", { params: { token: window.userToken } });
+var socket = new _phoenix.Socket("/socket", { params: { token: window.userToken } });
 
 // When you connect, you'll often need to authenticate the client.
 // For example, imagine you have an authentication plug, `MyAuth`,
@@ -1239,6 +1512,11 @@ var socket = new _depsPhoenixWebStaticJsPhoenix.Socket("/socket", { params: { to
 // Finally, pass the token on connect as below. Or remove it
 // from connect if you don't care about authentication.
 
+// NOTE: The contents of this file will only be executed if
+// you uncomment its entry in "web/static/js/app.js".
+
+// To use Phoenix channels, the first step is to import Socket
+// and connect at the socket path in "lib/my_app/endpoint.ex":
 socket.connect();
 
 // Now that you are connected, you can join channels with a topic:
@@ -1249,9 +1527,13 @@ channel.join().receive("ok", function (resp) {
   console.log("Unable to join", resp);
 });
 
-exports["default"] = socket;
-module.exports = exports["default"];
+exports.default = socket;
+
 });
 
-;require('web/static/js/app');
+require.register("___globals___", function(exports, require, module) {
+  
+});})();require('___globals___');
+
+require('web/static/js/app');
 //# sourceMappingURL=app.js.map
