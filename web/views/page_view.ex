@@ -1,3 +1,3 @@
-defmodule HelloGraphQL.PageView do
-  use HelloGraphQL.Web, :view
+defmodule MunchGraphQLService.PageView do
+  use MunchGraphQLService.Web, :view
 end

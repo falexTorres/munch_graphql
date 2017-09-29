@@ -1,8 +1,8 @@
-defmodule HelloGraphQL.Mixfile do
+defmodule MunchGraphQLService.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :hello_graphql,
+    [app: :munch_graphql_service,
      version: "0.3.0",
      elixir: "~> 1.2",
      elixirc_paths: elixirc_paths(Mix.env),
@@ -16,7 +16,7 @@ defmodule HelloGraphQL.Mixfile do
   #
   # Type `mix help compile.app` for more information.
   def application do
-    [mod: {HelloGraphQL, []},
+    [mod: {MunchGraphQLService, []},
      applications: [:phoenix, :phoenix_html, :cowboy, :logger,
                     :plug_graphql, :graphql,
                     :phoenix_ecto, :postgrex]]

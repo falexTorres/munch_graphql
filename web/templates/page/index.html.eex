@@ -11,7 +11,7 @@
     </p>
     <ul>
       <li>
-        <a href="https://github.com/graphql-elixir/hello_graphql_phoenix/blob/master/web/graphql/hello_world_schema.ex">
+        <a href="https://github.com/graphql-elixir/munch_graphql_service_phoenix/blob/master/web/graphql/hello_world_schema.ex">
           Schema definition
         </a>
       </li>
@@ -38,7 +38,7 @@
     </p>
     <ul>
       <li>
-        <a href="https://github.com/graphql-elixir/hello_graphql_phoenix/blob/master/web/graphql/simple_blog_schema.ex">
+        <a href="https://github.com/graphql-elixir/munch_graphql_service_phoenix/blob/master/web/graphql/simple_blog_schema.ex">
           Schema definition
         </a>
       </li>
@@ -62,7 +62,7 @@
     </p>
     <ul>
       <li>
-        <a href="https://github.com/graphql-elixir/hello_graphql_phoenix/blob/master/web/graphql/ecto_world_schema.ex">
+        <a href="https://github.com/graphql-elixir/munch_graphql_service_phoenix/blob/master/web/graphql/ecto_world_schema.ex">
           Schema definition
         </a>
       </li>
@@ -89,7 +89,7 @@
     </p>
     <ul>
       <li>
-        <a href="https://github.com/graphql-elixir/hello_graphql_phoenix/blob/master/web/graphql/star_wars_schema.ex">
+        <a href="https://github.com/graphql-elixir/munch_graphql_service_phoenix/blob/master/web/graphql/star_wars_schema.ex">
           Schema definition
         </a>
       </li>

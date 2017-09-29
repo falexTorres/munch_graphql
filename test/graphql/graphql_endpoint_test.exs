@@ -1,5 +1,5 @@
-defmodule HelloGraphQL.GraphQLEndpointTest do
-  use HelloGraphQL.ConnCase
+defmodule MunchGraphQLService.GraphQLEndpointTest do
+  use MunchGraphQLService.ConnCase
 
   test "GET /graphql with simple query" do
     conn = get conn(), "/graphql/hello", query: "{ greeting }"

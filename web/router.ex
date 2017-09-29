@@ -1,5 +1,5 @@
-defmodule HelloGraphQL.Router do
-  use HelloGraphQL.Web, :router
+defmodule MunchGraphQLService.Router do
+  use MunchGraphQLService.Web, :router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -13,7 +13,7 @@ defmodule HelloGraphQL.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", HelloGraphQL do
+  scope "/", MunchGraphQLService do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
@@ -22,30 +22,7 @@ defmodule HelloGraphQL.Router do
   scope "/graphql" do
     pipe_through :api
 
-    # Option 1: Wrap
-    # --------------
-
-    # forward "/hello", HelloWorldExample
-    # forward "/blog", SimpleBlogExample
-    # forward "/ecto_world", EctoWorldExample
-
-    # Option 2: get/post
-    # ------------------
-    get  "/hello",    GraphQL.Plug, schema: {GraphQL.Schema.HelloWorld, :schema}
-    post "/hello",    GraphQL.Plug, schema: {GraphQL.Schema.HelloWorld, :schema}
-
-    get  "/blog",     GraphQL.Plug, schema: {GraphQL.Schema.SimpleBlog, :schema}
-    post "/blog",     GraphQL.Plug, schema: {GraphQL.Schema.SimpleBlog, :schema}
-
-    get  "/ecto",     GraphQL.Plug, schema: {GraphQL.Schema.EctoWorld, :schema}
-    post "/ecto",     GraphQL.Plug, schema: {GraphQL.Schema.EctoWorld, :schema}
-
-    get  "/starwars", GraphQL.Plug, schema: {GraphQL.Schema.StarWars, :schema}
-    post "/starwars", GraphQL.Plug, schema: {GraphQL.Schema.StarWars, :schema}
-
-    # Option 3: match
-    # ---------------
-    # match  "/hello", GraphQL.Plug.Endpoint, schema: {GraphQL.Schema.HelloWorld, :schema}
-    # match  "/blog",  GraphQL.Plug.Endpoint, schema: {GraphQL.Schema.SimpleBlog, :schema}
+    get  "/truck", GraphQL.Plug, schema: {GraphQL.Schema.Truck, :schema}
+    post  "/truck", GraphQL.Plug, schema: {GraphQL.Schema.Truck, :schema}
   end
 end

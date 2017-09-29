@@ -2,17 +2,17 @@ use Mix.Config
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
-config :hello_graphql, HelloGraphQL.Endpoint,
+config :munch_graphql_service, MunchGraphQLService.Endpoint,
   http: [port: 4001],
   server: false
 
 # Print only warnings and errors during test
 config :logger, level: :warn
 
-config :hello_graphql, HelloGraphQL.Repo,
+config :munch_graphql_service, MunchGraphQLService.Repo,
   adapter: Ecto.Adapters.Postgres,
   username: "postgres",
   password: "",
-  database: "hello_graphql_test",
+  database: "munch_graphql_service_test",
   hostname: "localhost",
   pool_size: 10

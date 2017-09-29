@@ -1,5 +1,5 @@
-defmodule HelloGraphQL.PageController do
-  use HelloGraphQL.Web, :controller
+defmodule MunchGraphQLService.PageController do
+  use MunchGraphQLService.Web, :controller
 
   def index(conn, _params) do
     render conn, "index.html"

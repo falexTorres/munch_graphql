@@ -1,4 +1,4 @@
-defmodule HelloGraphQL.ChannelCase do
+defmodule MunchGraphQLService.ChannelCase do
   @moduledoc """
   This module defines the test case to be used by
   channel tests.
@@ -22,7 +22,7 @@ defmodule HelloGraphQL.ChannelCase do
 
 
       # The default endpoint for testing
-      @endpoint HelloGraphQL.Endpoint
+      @endpoint MunchGraphQLService.Endpoint
     end
   end
 

@@ -1,6 +1,6 @@
 # GraphQL Phoenix Examples
 
-[![Build Status](https://travis-ci.org/graphql-elixir/hello_graphql_phoenix.svg)](https://travis-ci.org/graphql-elixir/hello_graphql_phoenix)
+[![Build Status](https://travis-ci.org/graphql-elixir/munch_graphql_service_phoenix.svg)](https://travis-ci.org/graphql-elixir/munch_graphql_service_phoenix)
 [![Public Slack Discussion](https://graphql-slack.herokuapp.com/badge.svg)](https://graphql-slack.herokuapp.com/)
 
 This is a Phoenix app containing examples of how to use [plug_graphql](https://github.com/graphql-elixir/plug_graphql) which in turn uses the [GraphQL Elixir Core](https://github.com/graphql-elixir/graphql)
@@ -24,8 +24,8 @@ Using [plug_graphql](https://github.com/graphql-elixir/plug_graphql) with Phoeni
 
 Simply mount your GraphQL endpoint like so:
 
-1. Define your schema in `web/graphql` (see https://github.com/graphql-elixir/hello_graphql_phoenix/tree/master/web/graphql)
-2. [Mount your endpoint](https://github.com/graphql-elixir/hello_graphql_phoenix/blob/master/web/router.ex#L22-L26)
+1. Define your schema in `web/graphql` (see https://github.com/graphql-elixir/munch_graphql_service_phoenix/tree/master/web/graphql)
+2. [Mount your endpoint](https://github.com/graphql-elixir/munch_graphql_service_phoenix/blob/master/web/router.ex#L22-L26)
 
 ## Resources
 

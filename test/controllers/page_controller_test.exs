@@ -1,5 +1,5 @@
-defmodule HelloGraphQL.PageControllerTest do
-  use HelloGraphQL.ConnCase
+defmodule MunchGraphQLService.PageControllerTest do
+  use MunchGraphQLService.ConnCase
 
   test "GET /" do
     conn = get conn(), "/"

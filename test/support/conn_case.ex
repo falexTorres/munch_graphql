@@ -1,4 +1,4 @@
-defmodule HelloGraphQL.ConnCase do
+defmodule MunchGraphQLService.ConnCase do
   @moduledoc """
   This module defines the test case to be used by
   tests that require setting up a connection.
@@ -20,10 +20,10 @@ defmodule HelloGraphQL.ConnCase do
       # Import conveniences for testing with connections
       use Phoenix.ConnTest
 
-      import HelloGraphQL.Router.Helpers
+      import MunchGraphQLService.Router.Helpers
 
       # The default endpoint for testing
-      @endpoint HelloGraphQL.Endpoint
+      @endpoint MunchGraphQLService.Endpoint
     end
   end
 

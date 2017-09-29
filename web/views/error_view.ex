@@ -1,5 +1,5 @@
-defmodule HelloGraphQL.ErrorView do
-  use HelloGraphQL.Web, :view
+defmodule MunchGraphQLService.ErrorView do
+  use MunchGraphQLService.Web, :view
 
   def render("404.html", _assigns) do
     "Page not found"

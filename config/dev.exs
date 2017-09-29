@@ -6,7 +6,7 @@ use Mix.Config
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we use it
 # with brunch.io to recompile .js and .css sources.
-config :hello_graphql, HelloGraphQL.Endpoint,
+config :munch_graphql_service, MunchGraphQLService.Endpoint,
   http: [port: 4000],
   debug_errors: true,
   code_reloader: true,
@@ -15,7 +15,7 @@ config :hello_graphql, HelloGraphQL.Endpoint,
   watchers: [node: ["node_modules/brunch/bin/brunch", "watch", "--stdin"]]
 
 # Watch static and templates for browser reloading.
-config :hello_graphql, HelloGraphQL.Endpoint,
+config :munch_graphql_service, MunchGraphQLService.Endpoint,
   live_reload: [
     patterns: [
       ~r{priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$},
@@ -32,10 +32,10 @@ config :logger, :console, format: "[$level] $message\n"
 # and calculating stacktraces is usually expensive.
 config :phoenix, :stacktrace_depth, 20
 
-config :hello_graphql, HelloGraphQL.Repo,
+config :munch_graphql_service, MunchGraphQLService.Repo,
   adapter: Ecto.Adapters.Postgres,
   username: "yllaf",
   password: "asdf;lkj1",
-  database: "hello_graphql_dev",
+  database: "munch_graphql_service_dev",
   hostname: "localhost",
   pool_size: 10

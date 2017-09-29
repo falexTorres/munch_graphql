@@ -1,3 +1,3 @@
-defmodule HelloGraphQL.PageViewTest do
-  use HelloGraphQL.ConnCase, async: true
+defmodule MunchGraphQLService.PageViewTest do
+  use MunchGraphQLService.ConnCase, async: true
 end

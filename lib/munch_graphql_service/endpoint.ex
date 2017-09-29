@@ -1,14 +1,14 @@
-defmodule HelloGraphQL.Endpoint do
-  use Phoenix.Endpoint, otp_app: :hello_graphql
+defmodule MunchGraphQLService.Endpoint do
+  use Phoenix.Endpoint, otp_app: :munch_graphql_service
 
-  socket "/socket", HelloGraphQL.UserSocket
+  socket "/socket", MunchGraphQLService.UserSocket
 
   # Serve at "/" the static files from "priv/static" directory.
   #
   # You should set gzip to true if you are running phoenix.digest
   # when deploying your static files in production.
   plug Plug.Static,
-    at: "/", from: :hello_graphql, gzip: false,
+    at: "/", from: :munch_graphql_service, gzip: false,
     only: ~w(css fonts images js favicon.ico robots.txt)
 
   # Code reloading can be explicitly enabled under the
@@ -32,8 +32,8 @@ defmodule HelloGraphQL.Endpoint do
 
   plug Plug.Session,
     store: :cookie,
-    key: "_hello_graphql_key",
+    key: "_munch_graphql_service_key",
     signing_salt: "gj0BcsJn"
 
-  plug HelloGraphQL.Router
+  plug MunchGraphQLService.Router
 end
